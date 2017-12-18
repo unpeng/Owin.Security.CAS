@@ -1,3 +1,6 @@
+# Owin.Security.CAS.Enhanced
+Add a way to log out
+
 # Owin.Security.CAS
 Owin.Security.CAS is an [OWIN](http://owin.org) authentication provider for [CAS](https://github.com/Jasig/cas)
 
