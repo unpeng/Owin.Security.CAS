@@ -24,6 +24,7 @@ namespace Owin.Security.CAS
             TicketValidator = new Cas2ServiceValidateTicketValidator(this);
             NameClaimType = ClaimTypes.Name;
             CasCookieKey = ".AspNet.Correlation." + Caption;
+            CasSignOutHandler = new CasSignOutHandler(this);
         }
 
         /// <summary>
@@ -100,7 +101,10 @@ namespace Owin.Security.CAS
         /// </summary>
         public string CasCookieKey { get; set; }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        public CasSignOutHandler CasSignOutHandler { get; set; }
 
     }
 }

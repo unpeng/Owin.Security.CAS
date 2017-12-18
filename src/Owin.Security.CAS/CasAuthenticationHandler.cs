@@ -17,7 +17,7 @@ namespace Owin.Security.CAS
     {
         private readonly ILogger _logger;
         private readonly HttpClient _httpClient;
-        private static List<KeyValuePair<string, DateTime>> _logoutCasClients = new List<KeyValuePair<string, DateTime>>();
+        //private static List<KeyValuePair<string, DateTime>> _logoutCasClients = new List<KeyValuePair<string, DateTime>>();
         //private const string casCookieKey = ".AspNet.Correlation.CAS";
         private string casCookieValue;
         public CasAuthenticationHandler(HttpClient httpClient, ILogger logger)
@@ -31,15 +31,17 @@ namespace Owin.Security.CAS
             if (Options.CallbackPath.HasValue && Options.CallbackPath == Request.Path)
                 return await InvokeReturnPathAsync();
 
+            Options.CasSignOutHandler.ApplySignOutRequest(Context);
+
             //edit by wangp
             //判断是否已经收到cas server的logout消息
-            if (Context.Authentication.User != null && _logoutCasClients.Any(p => p.Key == Context.Authentication.User.FindFirst(Options.CasCookieKey).Value))
-            {
-                Context.Authentication.SignOut();
-                Context.Authentication.User = null;
-                Context.Response.Cookies.Delete("vi");
-                _logoutCasClients.RemoveAll(p => p.Value.AddMinutes(60) > DateTime.Now);
-            }
+            //if (Context.Authentication.User != null && _logoutCasClients.Any(p => p.Key == Context.Authentication.User.FindFirst(Options.CasCookieKey).Value))
+            //{
+            //    Context.Authentication.SignOut();
+            //    Context.Authentication.User = null;
+            //    Context.Response.Cookies.Delete("vi");
+            //    _logoutCasClients.RemoveAll(p => p.Value.AddMinutes(60) > DateTime.Now);
+            //}
             return false;
         }
 
@@ -156,7 +158,8 @@ namespace Owin.Security.CAS
             //edit by wangp
             //接收到cas server 的注销消息，记录到静态变量
             if (model.Identity == null)
-                _logoutCasClients.Add(new KeyValuePair<string, DateTime>(casCookieValue, DateTime.Now));
+                // _logoutCasClients.Add(new KeyValuePair<string, DateTime>(casCookieValue, DateTime.Now));
+                Options.CasSignOutHandler.ApplySignOutNotice(casCookieValue);
 
             var context = new CasReturnEndpointContext(Context, model)
             {
