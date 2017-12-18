@@ -9,14 +9,17 @@ using Microsoft.Owin.Infrastructure;
 using Microsoft.Owin.Logging;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Infrastructure;
-
+using System.Linq;
+using System.Configuration;
 namespace Owin.Security.CAS
 {
     internal class CasAuthenticationHandler : AuthenticationHandler<CasAuthenticationOptions>
     {
         private readonly ILogger _logger;
         private readonly HttpClient _httpClient;
-
+        private static List<KeyValuePair<string, DateTime>> _logoutCasClients = new List<KeyValuePair<string, DateTime>>();
+        //private const string casCookieKey = ".AspNet.Correlation.CAS";
+        private string casCookieValue;
         public CasAuthenticationHandler(HttpClient httpClient, ILogger logger)
         {
             _httpClient = httpClient;
@@ -28,6 +31,15 @@ namespace Owin.Security.CAS
             if (Options.CallbackPath.HasValue && Options.CallbackPath == Request.Path)
                 return await InvokeReturnPathAsync();
 
+            //edit by wangp
+            //判断是否已经收到cas server的logout消息
+            if (Context.Authentication.User != null && _logoutCasClients.Any(p => p.Key == Context.Authentication.User.FindFirst(Options.CasCookieKey).Value))
+            {
+                Context.Authentication.SignOut();
+                Context.Authentication.User = null;
+                Context.Response.Cookies.Delete("vi");
+                _logoutCasClients.RemoveAll(p => p.Value.AddMinutes(60) > DateTime.Now);
+            }
             return false;
         }
 
@@ -46,6 +58,10 @@ namespace Owin.Security.CAS
                     return null;
                 }
 
+                //edit by wangp
+                //记录本会话的cas通讯cookie值
+                casCookieValue = properties.Dictionary[Options.CasCookieKey];
+
                 // Anti-CSRF
                 if (!ValidateCorrelationId(properties, _logger))
                     return new AuthenticationTicket(null, properties);
@@ -58,6 +74,7 @@ namespace Owin.Security.CAS
 
                 var validator = Options.TicketValidator;
                 var service = Uri.EscapeDataString(BuildReturnTo(GetStateParameter(query)));
+
                 return await validator.ValidateTicket(Request, Context, _httpClient, ticket, properties, service);
             }
             catch (Exception ex)
@@ -136,6 +153,11 @@ namespace Owin.Security.CAS
                 return true;
             }
 
+            //edit by wangp
+            //接收到cas server 的注销消息，记录到静态变量
+            if (model.Identity == null)
+                _logoutCasClients.Add(new KeyValuePair<string, DateTime>(casCookieValue, DateTime.Now));
+
             var context = new CasReturnEndpointContext(Context, model)
             {
                 SignInAsAuthenticationType = Options.SignInAsAuthenticationType,
@@ -150,6 +172,10 @@ namespace Owin.Security.CAS
                 ClaimsIdentity signInIdentity = context.Identity;
                 if (!string.Equals(signInIdentity.AuthenticationType, context.SignInAsAuthenticationType, StringComparison.OrdinalIgnoreCase))
                     signInIdentity = new ClaimsIdentity(signInIdentity.Claims, context.SignInAsAuthenticationType, signInIdentity.NameClaimType, signInIdentity.RoleClaimType);
+
+                //edit by wangp
+                //本会话的cas通讯cookie值记录到登录会话用户Identity中
+                signInIdentity.AddClaim(new Claim(Options.CasCookieKey, casCookieValue ?? string.Empty));
                 Context.Authentication.SignIn(context.Properties, signInIdentity);
             }
 

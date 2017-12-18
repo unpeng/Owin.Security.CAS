@@ -23,6 +23,7 @@ namespace Owin.Security.CAS
             BackchannelTimeout = TimeSpan.FromSeconds(60);
             TicketValidator = new Cas2ServiceValidateTicketValidator(this);
             NameClaimType = ClaimTypes.Name;
+            CasCookieKey = ".AspNet.Correlation." + Caption;
         }
 
         /// <summary>
@@ -93,5 +94,13 @@ namespace Owin.Security.CAS
         /// the NameIdentifier claim, which is used to associate external logins
         /// </summary>
         public string NameIdentifierAttribute { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string CasCookieKey { get; set; }
+
+
+
     }
 }
