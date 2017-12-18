@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Owin.Security.CAS</RootNamespace>
-    <AssemblyName>Owin.Security.CAS</AssemblyName>
+    <AssemblyName>Owin.Security.CAS.Enhanced</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">D:\SVN\13.VisionHR\VisionHR\trunk\</SolutionDir>
