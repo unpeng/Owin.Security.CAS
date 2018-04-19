@@ -14,14 +14,17 @@ Add
 
 ##ExternalLoginCallback Function
 Before SignInManager.SignInAsync(appUser), you should add
+```c#
      appUser.ExternalIdentity = (await AuthenticationManager.GetExternalLoginInfoAsync()).ExternalIdentity;
-
+```
 ##ApplicationUser:IdentityUser Class
 Add Properties
+```c#
     public ClaimsIdentity ExternalIdentity { get; set; }
-
-#ApplicationClaimsIdentityFactory : ClaimsIdentityFactory<ApplicationUser, string>
+```
+##ApplicationClaimsIdentityFactory : ClaimsIdentityFactory<ApplicationUser, string>
 Add Code
+```c#
         public override Task<ClaimsIdentity> CreateAsync(UserManager<ApplicationUser, string> manager, ApplicationUser user, string authenticationType)
         {
             if (manager == null)
@@ -44,7 +47,7 @@ Add Code
                 });
             return Task.FromResult(id);
         }
-     
+```     
 
 # Owin.Security.CAS
 Owin.Security.CAS is an [OWIN](http://owin.org) authentication provider for [CAS](https://github.com/Jasig/cas)
