@@ -1,6 +1,51 @@
 # Owin.Security.CAS.Enhanced
 Add a way to log out
 
+Add
+## CasAuthenticationOptions
+### Properties
+* `CasSignOutHandler` 
+
+1. Install the NuGet package
+
+    `PM> install-package Owin.Security.CAS.Enhanced`
+
+2.Add Code
+
+##ExternalLoginCallback Function
+Before SignInManager.SignInAsync(appUser), you should add
+     appUser.ExternalIdentity = (await AuthenticationManager.GetExternalLoginInfoAsync()).ExternalIdentity;
+
+##ApplicationUser:IdentityUser Class
+Add Properties
+    public ClaimsIdentity ExternalIdentity { get; set; }
+
+#ApplicationClaimsIdentityFactory : ClaimsIdentityFactory<ApplicationUser, string>
+Add Code
+        public override Task<ClaimsIdentity> CreateAsync(UserManager<ApplicationUser, string> manager, ApplicationUser user, string authenticationType)
+        {
+            if (manager == null)
+            {
+                throw new ArgumentNullException("manager");
+            }
+            if (user == null)
+            {
+                throw new ArgumentNullException("user");
+            }
+            ClaimsIdentity id = new ClaimsIdentity(authenticationType, this.UserNameClaimType, this.RoleClaimType);
+            id.AddClaim(new Claim(this.UserIdClaimType, this.ConvertIdToString(user.Id), "http://www.w3.org/2001/XMLSchema#string"));
+            id.AddClaim(new Claim(this.UserNameClaimType, user.UserName, "http://www.w3.org/2001/XMLSchema#string"));
+            id.AddClaim(new Claim("http://schemas.microsoft.com/accesscontrolservice/2010/07/claims/identityprovider", "ASP.NET Identity", "http://www.w3.org/2001/XMLSchema#string"));
+            if (manager.SupportsUserClaim && user.ExternalIdentity != null)
+                user.ExternalIdentity.Claims.ToList().ForEach(claim =>
+                {
+                    if (!id.HasClaim(p => p.Type == claim.Type))
+                        id.AddClaim(claim);
+                });
+            return Task.FromResult(id);
+        }
+     
+
 # Owin.Security.CAS
 Owin.Security.CAS is an [OWIN](http://owin.org) authentication provider for [CAS](https://github.com/Jasig/cas)
 
